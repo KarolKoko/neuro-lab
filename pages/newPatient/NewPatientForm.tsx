@@ -5,6 +5,7 @@ import {styled} from 'styled-components';
 import closeIcon from '../../assets/x.svg'
 import ErrorDialog from '../../components/ErrorDialog';
 import { onUpdatePatient } from './newPatient.telefunc';
+import { navigate } from 'vike/client/router';
 
 const AUTOSAVE_DELAY_MS = 800;
 
@@ -13,7 +14,10 @@ type NewPatientFormProps = {
     forms: PatientFormEntry[];
     readOnly?: boolean;
     onFormsChange?: (forms: PatientFormEntry[]) => void;
-    onFormCompleted: (formId: number) => void;
+    saveOnFinishOnly?: boolean;
+    allowDraftSave?: boolean;
+    onSave?: (forms: PatientFormEntry[]) => Promise<void>;
+    onFinish?: (forms: PatientFormEntry[]) => void;
     onClose: () => void;
 };
 
@@ -31,11 +35,12 @@ const FullSizeDialog = styled.div`
     width: 100%;
     height: 100vh;
     background-color: #fff;
-    position: absolute;
+    position: fixed;
+    z-index: 40;
     top: 0;
     left: 0;
     overflow-y: auto;
-    padding: 100px;
+    padding: clamp(20px, 6vw, 100px);
 `
 
 const NewPatientForm = ({
@@ -43,7 +48,10 @@ const NewPatientForm = ({
     forms,
     readOnly = false,
     onFormsChange,
-    onFormCompleted,
+    saveOnFinishOnly = false,
+    allowDraftSave = false,
+    onSave,
+    onFinish,
     onClose,
 }: NewPatientFormProps) => {
     const [entries, setEntries] = useState<PatientFormEntry[]>(forms);
@@ -56,10 +64,12 @@ const NewPatientForm = ({
     const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [missingRequiredFields, setMissingRequiredFields] = useState<string[]>([]);
+    const [advancing, setAdvancing] = useState(false);
 
     const latestEntries = useRef(entries);
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const hasPendingChanges = useRef(false);
+    const advancingRef = useRef(false);
     // Saves are chained so an older request can never overwrite a newer one
     const saveQueue = useRef<Promise<void>>(Promise.resolve());
 
@@ -79,7 +89,11 @@ const NewPatientForm = ({
         setSaveStatus("saving");
         saveQueue.current = saveQueue.current.then(async () => {
             try {
-                await onUpdatePatient({ patientId, formFilled: snapshot });
+                if (onSave) {
+                    await onSave(snapshot);
+                } else {
+                    await onUpdatePatient({ patientId, formFilled: snapshot });
+                }
                 setSaveStatus(hasPendingChanges.current ? "pending" : "saved");
             } catch (err) {
                 console.error("Nie udało się zapisać formularza pacjenta:", err);
@@ -93,7 +107,7 @@ const NewPatientForm = ({
             }
         });
         return saveQueue.current;
-    }, [patientId]);
+    }, [patientId, onSave]);
 
     const updateValue = (
         entryIndex: number,
@@ -102,12 +116,12 @@ const NewPatientForm = ({
         value: string,
     ) => {
         setMissingRequiredFields([]);
-        setEntries((previousEntries) => {
-            const nextEntries = previousEntries.map((entry, currentEntry) =>
+        const nextEntries = latestEntries.current.map((entry, currentEntry) =>
                 currentEntry !== entryIndex
                     ? entry
                     : {
                           ...entry,
+                          completed: false,
                           layout: entry.layout.map((row, currentRow) =>
                               currentRow !== rowIndex
                                   ? row
@@ -120,21 +134,20 @@ const NewPatientForm = ({
                                     },
                           ),
                       },
-            );
-            latestEntries.current = nextEntries;
-            return nextEntries;
-        });
+        );
+        latestEntries.current = nextEntries;
+        setEntries(nextEntries);
 
         hasPendingChanges.current = true;
         setSaveStatus("pending");
         if (timer.current) clearTimeout(timer.current);
-        timer.current = setTimeout(save, AUTOSAVE_DELAY_MS);
+        if (!saveOnFinishOnly) timer.current = setTimeout(save, AUTOSAVE_DELAY_MS);
     };
 
     // Flush unsaved changes when the component unmounts
     useEffect(() => () => {
-        void save();
-    }, [save]);
+        if (!saveOnFinishOnly) void save();
+    }, [save, saveOnFinishOnly]);
 
     const startFilling = () => {
         setQueue([
@@ -145,12 +158,33 @@ const NewPatientForm = ({
     };
 
     const closeForm = async () => {
+        if (saveOnFinishOnly) {
+            onClose();
+            return;
+        }
         await save();
         if (!hasPendingChanges.current) onClose();
     };
 
+    const saveDraft = async () => {
+        if (advancingRef.current || !onFinish) return;
+        advancingRef.current = true;
+        setAdvancing(true);
+        try {
+            const draftEntries = latestEntries.current.map((entry) => ({ ...entry, completed: false }));
+            latestEntries.current = draftEntries;
+            setEntries(draftEntries);
+            hasPendingChanges.current = true;
+            await save();
+            if (!hasPendingChanges.current) onFinish(draftEntries);
+        } finally {
+            advancingRef.current = false;
+            setAdvancing(false);
+        }
+    };
+
     const goNext = async () => {
-        if (!queue) return;
+        if (!queue || advancingRef.current) return;
 
         const entryIndex = queue[queuePosition];
         const currentEntry = entries[entryIndex];
@@ -169,15 +203,34 @@ const NewPatientForm = ({
             return;
         }
 
-        setMissingRequiredFields([]);
-        await save();
-        if (hasPendingChanges.current) return;
+        advancingRef.current = true;
+        setAdvancing(true);
+        try {
+            setMissingRequiredFields([]);
+            const completedEntries = latestEntries.current.map((entry, index) =>
+                index === entryIndex ? { ...entry, completed: true } : entry,
+            );
+            latestEntries.current = completedEntries;
+            setEntries(completedEntries);
+            hasPendingChanges.current = true;
+            await save();
+            if (hasPendingChanges.current) return;
 
-        onFormCompleted(currentEntry.form_id);
-        if (queuePosition + 1 < queue.length) {
-            setQueuePosition(queuePosition + 1);
-        } else {
-            onClose();
+            if (queuePosition + 1 < queue.length) {
+                setQueuePosition(queuePosition + 1);
+            } else {
+                if (onFinish) {
+                    onFinish(completedEntries);
+                } else {
+                    await navigate("/patients");
+                }
+            }
+        } catch (error) {
+            console.error("Nie udało się przejść do listy pacjentów:", error);
+            setErrorMessage("Nie udało się przejść do listy pacjentów. Spróbuj ponownie.");
+        } finally {
+            advancingRef.current = false;
+            setAdvancing(false);
         }
     };
 
@@ -225,8 +278,9 @@ const NewPatientForm = ({
                         {readOnly ? "Podgląd: " : queue.length > 1 && `Formularz ${queuePosition + 1} z ${queue.length}: `}
                         <b>{entry.name}</b> {!readOnly && SAVE_STATUS_LABELS[saveStatus] && `— ${SAVE_STATUS_LABELS[saveStatus]}`}
                     </span>
-                    <button onClick={closeForm}><img src={closeIcon} alt="Zamknij okno formularza" /></button>
+                    <button onClick={closeForm} disabled={advancing}><img src={closeIcon} alt="Zamknij okno formularza" /></button>
                 </div>
+                {saveOnFinishOnly && <p className="px-2 text-sm text-gray-600">Zmiany są zapisywane po kliknięciu przycisku zapisu. Zamknięcie anuluje zmiany.</p>}
                 {
                     entry.layout.map((row, rowIndex) => (
                         <FormRowView key={rowIndex} $columnCount={row.columns.length}>
@@ -246,6 +300,7 @@ const NewPatientForm = ({
                                 return (
                                     <FieldLabel key={columnIndex}>
                                         {field.label}{field.required ? " *" : ""}
+                                        {inputType === "file" && field.value && !readOnly && <span className="text-sm">Obecny plik: {field.value}</span>}
                                         {readOnly ? (
                                             <PreviewInput
                                                 type={inputType === "checkbox" ? "checkbox" : "text"}
@@ -256,6 +311,7 @@ const NewPatientForm = ({
                                         ) : (
                                             <PreviewInput
                                                 type={inputType}
+                                                disabled={advancing}
                                                 required={field.required}
                                                 {...(inputType === "checkbox"
                                                     ? { checked: field.value === "true" }
@@ -294,12 +350,18 @@ const NewPatientForm = ({
                 )}
                 {!readOnly && (
                     <div className='flex justify-end p-4'>
+                        {allowDraftSave && (
+                            <button type="button" onClick={saveDraft} disabled={advancing} className="mr-3 rounded border px-5 py-2 text-sm font-semibold disabled:opacity-50">
+                                Zapisz wersję roboczą
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={goNext}
-                            className="cursor-pointer rounded bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                        >
-                            {isLast ? "Zakończ" : "Dalej"}
+                            disabled={advancing}
+                            className="cursor-pointer rounded bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                        > 
+                            {isLast ? (saveOnFinishOnly ? "Zapisz" : "Zakończ") : "Dalej"}
                         </button>
                     </div>
                 )}

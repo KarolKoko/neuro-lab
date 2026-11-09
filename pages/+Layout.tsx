@@ -12,7 +12,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     const { user } = usePageContext();
     if (!user) return <Content>{children}</Content>;    
     return (
-        <div className={"bg-cover bg-center bg-fixed"} style={{ backgroundImage: `url(${bg})`, height: "100vh" }}>
+        <div className={"bg-cover bg-center bg-fixed"} style={{ backgroundImage: `url(${bg})` }}>
             <div className="flex flex-col max-w-5xl m-auto ">
                 <TopNav user={user} />
                 <SubNav />
@@ -48,6 +48,7 @@ function SubNav() {
         { href: "/", label: "Home" },
         { href: "/formTemplates", label: "Moje formularze" },
         { href: "/newPatient", label: "Nowy pacjent" },
+        { href: "/patients", label: "Pacjenci" },
     ];
 
     return (

@@ -52,8 +52,21 @@
     font-family: Arial, sans-serif;
     font-size: 11pt;
   }
+}
 
-  .print-title {
+.form-document-preview {
+  width: 100%;
+  max-width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  padding: 18mm 20mm;
+  color: #333;
+  background: #fff;
+  font-family: Arial, sans-serif;
+  font-size: 11pt;
+}
+
+  .form-document .print-title {
     margin: 0 0 18mm;
     color: #111;
     font-size: 15pt;
@@ -62,23 +75,23 @@
     text-transform: uppercase;
   }
 
-  .print-layout {
+  .form-document .print-layout {
     display: flex;
     flex-direction: column;
     gap: 5mm;
   }
 
-  .print-row {
+  .form-document .print-row {
     display: grid;
     gap: 5mm;
     break-inside: avoid;
   }
 
-  .print-cell {
+  .form-document .print-cell {
     min-width: 0;
   }
 
-  .print-field {
+  .form-document .print-field {
     display: flex;
     align-items: baseline;
     gap: 2mm;
@@ -86,30 +99,31 @@
     line-height: 1.5;
   }
 
-  .print-long-field {
+  .form-document .print-long-field {
     display: block;
   }
 
-  .print-writing-lines {
+  .form-document .print-writing-lines {
     display: flex;
     flex-direction: column;
     gap: 2mm;
     margin-top: 3mm;
   }
 
-  .print-answer-line {
+  .form-document .print-answer-line {
     flex: 1;
     min-width: 8mm;
     min-height: 5mm;
     border-bottom: 1px dotted #999;
+    overflow-wrap: anywhere;
   }
 
-  .print-empty-line {
+  .form-document .print-empty-line {
     display: block;
     min-height: 7mm;
   }
 
-  .print-section-title {
+  .form-document .print-section-title {
     display: flex;
     align-items: baseline;
     gap: 2mm;
@@ -120,12 +134,13 @@
     line-height: 1.5;
   }
 
-  .print-checkbox {
+  .form-document .print-checkbox {
     display: inline-block;
     flex: 0 0 4mm;
     width: 4mm;
     height: 4mm;
     border: 1px solid #777;
     vertical-align: baseline;
+    text-align: center;
+    line-height: 4mm;
   }
-}

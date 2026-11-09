@@ -2,7 +2,8 @@ import React, { useCallback, useState, useEffect } from 'react'
 import { useData } from 'vike-react/useData';
 import type { Data } from "./+data";
 import NewPatientForm from './NewPatientForm';
-import { onPatientInit } from './newPatient.telefunc';
+import { onPatientInit, onUpdatePatient } from './newPatient.telefunc';
+import { navigate } from 'vike/client/router';
 import ErrorDialog from '../../components/ErrorDialog';
 import type { FormRow, PatientFormEntry } from '../../types/form';
 
@@ -48,8 +49,8 @@ const Page = () => {
     const [ creationModalOpen, setCreationModalOpen ] = useState<boolean>(false)
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [createdPatient, setCreatedPatient] = useState<{ patientId: number; forms: PatientFormEntry[] } | null>(null)
-    const [completedFormIds, setCompletedFormIds] = useState<number[]>([])
     const [currentPreviewForm, setCurrentPreviewForm] = useState<number | null>(null)
+    const [finishing, setFinishing] = useState(false)
     const [ patientInitData, setPatientInitData ] = useState<PatientInitData>({
         unq: "",
         date: "",
@@ -104,6 +105,20 @@ const Page = () => {
             );
         }
     }
+
+    const finishCreation = async () => {
+        if (!createdPatient || finishing) return;
+        setFinishing(true);
+        try {
+            await onUpdatePatient({ patientId: createdPatient.patientId, formFilled: createdPatient.forms });
+            await navigate("/patients");
+        } catch (err) {
+            console.error("Nie udało się zakończyć tworzenia pacjenta:", err);
+            setErrorMessage(err instanceof Error && err.message ? err.message : "Nie udało się zapisać pacjenta. Spróbuj ponownie.");
+        } finally {
+            setFinishing(false);
+        }
+    };
 
     // Saved as DD-MM-YYYY (the format accepted by isValidDate)
     const setVisitDate = (date: Date) => {
@@ -166,10 +181,10 @@ const Page = () => {
                 {forms.map(f => {
                     return (
                         <div key={f.form_id} className='w-xs relative rounded border p-3 pb-12' onClick={() => {
-                            if(!(completedFormIds.includes(f.form_id) &&
-                                createdPatient?.forms.some(
+                            if(!(createdPatient?.forms.some(
                                     (entry) =>
                                         entry.form_id === f.form_id &&
+                                        entry.completed === true &&
                                         hasAllRequiredFields(entry.layout),
                                 ))){
                                     toggleSelectedForm(f.form_id)
@@ -177,10 +192,10 @@ const Page = () => {
                         }}>
                             <input type="checkbox" className='mr-5' checked={selectedForms.includes(f.form_id)} onChange={() => {}} /> <b>{f.name}</b>
                             <p>{getFieldLabels(f.layout).join(", ").length > 100 ? `${getFieldLabels(f.layout).join(", ").slice(0, 100)}...` : getFieldLabels(f.layout).join(", ")}</p>
-                            {completedFormIds.includes(f.form_id) &&
-                                createdPatient?.forms.some(
+                            {createdPatient?.forms.some(
                                     (entry) =>
                                         entry.form_id === f.form_id &&
+                                        entry.completed === true &&
                                         hasAllRequiredFields(entry.layout),
                                 ) && (
                                     <>
@@ -202,7 +217,7 @@ const Page = () => {
                 })}
             </div>
             <div className='mt-4'>
-                <button className='rounded border p-3'>Zakończ</button>
+                <button type="button" onClick={finishCreation} disabled={!createdPatient || finishing} className='rounded border p-3 disabled:opacity-50'>Zakończ</button>
             </div>
             {creationModalOpen && createdPatient && (
                 <NewPatientForm
@@ -211,11 +226,6 @@ const Page = () => {
                     forms={currentPreviewForm !== null ? createdPatient.forms.filter(f => f.form_id === currentPreviewForm) : createdPatient.forms}
                     readOnly={currentPreviewForm !== null}
                     onFormsChange={updateCreatedPatientForms}
-                    onFormCompleted={(formId) =>
-                        setCompletedFormIds((previous) =>
-                            previous.includes(formId) ? previous : [...previous, formId],
-                        )
-                    }
                     onClose={() => {
                         setCreationModalOpen(false)
                         setCurrentPreviewForm(null)

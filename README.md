@@ -4,6 +4,47 @@ Generated with [vike.dev/new](https://vike.dev/new) ([version 681](https://www.n
 npm create vike@latest --- --react --tailwindcss --telefunc --hono --postgres
 ```
 
+## Pacjenci
+
+Strona główna zawiera szybkie akcje oraz pięciu pacjentów z najnowszą datą
+wizyty. W przypadku równych dat kolejność ustala identyfikator pacjenta malejąco.
+
+Lista `/patients` wyświetla 100 pacjentów na stronę. Wyszukiwanie obejmuje
+identyfikator pacjenta i zapisane wartości pól formularzy pacjenta oraz wizyt; kilka fraz łączy
+warunek OR. Datę wizyty można połączyć z wyszukiwaniem fraz. Data ostatniej
+wizyty to najpóźniejsza data z rejestru wizyt; gdy rejestr jest pusty,
+wyświetlana jest data pierwszej wizyty zapisana przy tworzeniu pacjenta.
+
+Formularz jest oznaczany jako ukończony po przejściu wymaganych pól i
+pomyślnym zapisie. Status jest przechowywany w danych JSON pacjenta; starsze
+formularze bez tego statusu nie są automatycznie uznawane za ukończone.
+Wyszukiwanie załączników obejmuje tylko zapisaną nazwę pliku.
+
+Kliknięcie identyfikatora na liście lub w wynikach wyszukiwania otwiera
+`/patient/:id`, gdzie widoczne są wszystkie przypisane formularze, ich status
+i do pięciu pierwszych zapisanych wartości każdego z nich. Przycisk „Podgląd”
+otwiera stronę z pełnym układem formularza i zapisanymi odpowiedziami.
+Nieukończony formularz można uzupełnić lub zapisać jako wersję roboczą.
+Zmiany w wybranym formularzu są zapisywane po użyciu przycisku zapisu;
+zamknięcie edytora je odrzuca.
+
+Na stronie pacjenta przycisk „Wizyta” tworzy wizytę z co najmniej jednym
+wybranym formularzem; „Rejestr wizyt” otwiera listę wizyt danego pacjenta
+z wyszukiwaniem po frazach i dacie. Formularze wizyty są niezależnymi kopiami,
+które można później uzupełnić, edytować i obejrzeć.
+Przed pierwszym uruchomieniem tej funkcji wykonaj `npm run postgres:migrate`,
+aby utworzyć tabelę `visits`. Istniejąca pierwsza wizyta pozostaje w danych
+pacjenta i nie jest automatycznie dodawana do rejestru wizyt.
+
+Testy wyszukiwania można uruchomić przez `node --import tsx --test pages/patients/patients.test.ts`.
+Test PostgreSQL wymaga ustawienia `TEST_DATABASE_URL` i korzysta wyłącznie
+z tymczasowej tabeli w tej bazie.
+
+## Wdrożenie
+
+Konfiguracja Ubuntu, PostgreSQL, Nginx, Authentik i GitHub Actions jest opisana
+w [przewodniku wdrożenia](docs/deployment.md).
+
 ## Contents
 
 - [Vike](#vike)
@@ -43,4 +84,3 @@ SSR is enabled by default. You can [disable it](https://vike.dev/ssr) for all or
 ### HTML Streaming
 
 You can [enable/disable HTML streaming](https://vike.dev/stream) for all or specific pages.
-

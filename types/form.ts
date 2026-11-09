@@ -40,4 +40,5 @@ export type PatientFormEntry = {
     form_id: number;
     name: string;
     layout: FormRow[];
+    completed?: boolean;
 };

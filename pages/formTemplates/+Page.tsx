@@ -7,6 +7,7 @@ import previewIcon from "../../assets/eye.svg";
 import { PreviewModal } from "../formCreator/+Page";
 import { onDeleteForm } from "../formCreator/formCreator.telefunc";
 import addIcon from '../../assets/plus.svg'
+import { PrintableForm } from "../../components/PrintableForm";
 
 type FormRow = {
     columns: {
@@ -17,68 +18,6 @@ type FormRow = {
         } | null;
     }[];
 };
-
-type PrintableFormProps = {
-    title: string;
-    layout: FormRow[];
-};
-
-const PrintableForm = ({ title, layout }: PrintableFormProps) => (
-    <section className="printable-form" aria-hidden="true">
-        <h1 className="print-title">{title}</h1>
-        <div className="print-layout">
-            {layout.map((row, rowIndex) => (
-                <div
-                    className="print-row"
-                    style={{ gridTemplateColumns: `repeat(${row.columns.length}, minmax(0, 1fr))` }}
-                    key={rowIndex}
-                >
-                    {row.columns.map(({ field }, columnIndex) => {
-                        const needsWritingLines =
-                            field?.type !== "checkbox" &&
-                            field?.type !== "label" &&
-                            (field?.label.length ?? 0) > 50;
-
-                        return (
-                            <div className="print-cell" key={columnIndex}>
-                                {field?.type === "label" ? (
-                                    <h2 className="print-section-title">
-                                        <span className="print-checkbox" aria-hidden="true" />
-                                        {field.label}
-                                    </h2>
-                                ) : field ? (
-                                    <div
-                                        className={`print-field${needsWritingLines ? " print-long-field" : ""}`}
-                                    >
-                                        {field.type === "checkbox" && (
-                                            <span className="print-checkbox" aria-hidden="true" />
-                                        )}
-                                        <span>{field.label}</span>
-                                        {field.type !== "checkbox" &&
-                                            (needsWritingLines ? (
-                                                <div className="print-writing-lines">
-                                                    {[0, 1, 2].map((line) => (
-                                                        <div
-                                                            className="print-answer-line"
-                                                            key={line}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <span className="print-answer-line" />
-                                            ))}
-                                    </div>
-                                ) : (
-                                    <div className="print-answer-line print-empty-line" />
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            ))}
-        </div>
-    </section>
-);
 
 type FormBoxProps = {
     formId: number;

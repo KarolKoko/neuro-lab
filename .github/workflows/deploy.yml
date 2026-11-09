@@ -1,0 +1,87 @@
+name: Deploy NeuroLab
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: neurolab-production
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: neurolab_test
+          POSTGRES_PASSWORD: neurolab_test
+          POSTGRES_DB: neurolab_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U neurolab_test -d neurolab_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: node --test scripts/pg-connection.test.cjs
+      - run: npm run build
+      - name: Test PostgreSQL queries
+        env:
+          TEST_DATABASE_URL: postgresql://neurolab_test:neurolab_test@127.0.0.1:5432/neurolab_test
+        run: >-
+          node --import tsx --test
+          pages/patients/patients.test.ts
+          pages/patient/@id/patient.test.ts
+          pages/patient/@id/visits/visits.test.ts
+
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install SSH password client
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+      - name: Upload and deploy
+        shell: bash
+        env:
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+          COMMIT_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -Eeuo pipefail
+          test -n "$DEPLOY_USER" && test -n "$SSHPASS" && test -n "$SSH_KNOWN_HOSTS"
+          [[ "$DEPLOY_USER" =~ ^[a-z_][a-z0-9_-]*\$?$ ]]
+          [[ "$COMMIT_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$RUN_ID" =~ ^[0-9]+$ && "$RUN_ATTEMPT" =~ ^[0-9]+$ ]]
+          release_id="${RUN_ID}-${RUN_ATTEMPT}-${COMMIT_SHA}"
+          mkdir -p "$HOME/.ssh"
+          chmod 700 "$HOME/.ssh"
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/known_hosts"
+          git archive --format=tar "$COMMIT_SHA" | gzip > "$RUNNER_TEMP/neurolab.tar.gz"
+          ssh_options=(-o StrictHostKeyChecking=yes -o UserKnownHostsFile="$HOME/.ssh/known_hosts" -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive -o NumberOfPasswordPrompts=1)
+          sshpass -e scp "${ssh_options[@]}" "$RUNNER_TEMP/neurolab.tar.gz" "$DEPLOY_USER@77.55.208.178:/srv/neurolab/uploads/$release_id.tar.gz"
+          sshpass -e ssh "${ssh_options[@]}" "$DEPLOY_USER@77.55.208.178" "bash -s -- '$release_id'" < scripts/deploy.sh
