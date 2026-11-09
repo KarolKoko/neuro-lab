@@ -134,8 +134,8 @@ const Page = () => {
                 marginTop: "20px",
                 marginBottom: "20px"
             }}>Nowy pacjent</h2>
-            <div className='flex items-center' style={{ gap: "20px" }}>
-                <div>
+            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1fr)]'>
+                <div className="min-w-0">
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="patient_unq_id">
                         Unikalny identyfikator pacjenta *
                     </label>
@@ -147,18 +147,20 @@ const Page = () => {
                     })} className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="patient_unq_id" type="text" placeholder="Maciej Kowalski"></input>
                     <p className="text-gray-500 text-xs italic">Wpisz PESEL, albo imię i naziwsko - użyj unikalnej frazy</p>
                 </div>
-                <div className='border p-3 rounded'>
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="patient_unq_id">
+                <div className='min-w-0 border p-3 rounded'>
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="patient_visit_date">
                         Data wizyty *
                     </label>                    
                     {ClientDatePicker ? <ClientDatePicker onDateChange={setVisitDate} /> : <p>Ładowanie kalendarza...</p>}
                 </div>
-                <div className='border p-3 rounded'>
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="patient_unq_id">
+                <div className='min-w-0 border p-3 rounded'>
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="patient_visit_time">
                         Godzina
                     </label>                                        
                     <input
                         type="time"
+                        id="patient_visit_time"
+                        className="w-full min-w-0"
                         step={1}
                         value={patientInitData.time}
                         onChange={(event) => {
@@ -174,13 +176,13 @@ const Page = () => {
                         }}
                     />
                 </div>
-                {patientInitData.date && patientInitData.time && patientInitData.unq && selectedForms.length > 0 && <button onClick={() => startCreation()} className='inline-flex items-center gap-2 rounded border px-3 py-7 text-sm font-semibold' style={{cursor: "pointer"}}>Przejdź do wypełniania formularza</button>}
+                {patientInitData.date && patientInitData.time && patientInitData.unq && selectedForms.length > 0 && <button onClick={() => startCreation()} className='min-h-11 rounded border px-4 py-3 text-sm font-semibold sm:col-span-2 lg:col-span-3' style={{cursor: "pointer"}}>Przejdź do wypełniania formularza</button>}
             </div>
             <h3 style={{fontSize: "20px", marginTop: "20px"}}>Z jakich/jakiego formularza/y skorzystasz?</h3>
-            <div className='flex flex-wrap' style={{gap: "20px", width: "100%", marginTop: "20px"}}>
+            <div className='mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
                 {forms.map(f => {
                     return (
-                        <div key={f.form_id} className='w-xs relative rounded border p-3 pb-12' onClick={() => {
+                        <div key={f.form_id} className='relative min-w-0 break-words rounded border p-3 pb-12' onClick={() => {
                             if(!(createdPatient?.forms.some(
                                     (entry) =>
                                         entry.form_id === f.form_id &&

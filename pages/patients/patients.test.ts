@@ -15,7 +15,7 @@ test("validates visit dates and patient identifiers", () => {
 test("recent patients use visit date, first visit fallback and limit of five", { skip: !process.env.TEST_DATABASE_URL }, async () => {
     const sql = postgres(process.env.TEST_DATABASE_URL!, { max: 1 });
     try {
-        await sql`CREATE TEMP TABLE patient (patient_id serial primary key, patient_unq_id text not null, first_visit_date text)`;
+        await sql`CREATE TEMP TABLE patient (patient_id serial primary key, patient_unq_id text not null, first_visit_date text, is_deleted boolean not null default false)`;
         await sql`CREATE TEMP TABLE visits (id serial primary key, patient_id integer not null, date date not null)`;
         assert.deepEqual(await getRecentPatients(sql), []);
         await sql`INSERT INTO patient (patient_unq_id, first_visit_date) VALUES
@@ -55,7 +55,8 @@ test("queries and updates patients in an isolated temporary table", { skip: !pro
             patient_id serial primary key,
             patient_unq_id text not null,
             first_visit_date text,
-            start_forms jsonb not null
+            start_forms jsonb not null,
+            is_deleted boolean not null default false
         )`;
         await sql`CREATE TEMP TABLE visits (id serial primary key, patient_id integer not null, date date not null, time time not null, forms_data jsonb not null)`;
         await sql`INSERT INTO patient (patient_unq_id, first_visit_date, start_forms)

@@ -53,21 +53,21 @@ export default function Page() {
             <a className="underline" href={`/patient/${patientId}/visits`}>← Rejestr wizyt</a>
             <h1 className="mt-4 text-3xl font-semibold">Nowa wizyta</h1>
             <div className="mt-5 flex flex-wrap items-end gap-4">
-                <label className="font-semibold">Unikalny identyfikator pacjenta
-                    <input className="mt-1 block rounded border bg-gray-100 px-3 py-2 font-normal" value={patientIdentifier} readOnly />
+                <label className="min-w-0 max-w-full font-semibold">Unikalny identyfikator pacjenta
+                    <input className="mt-1 block max-w-full rounded border bg-gray-100 px-3 py-2 font-normal" value={patientIdentifier} readOnly />
                 </label>
-                <label className="font-semibold">Data wizyty *
-                    <input type="date" className="mt-1 block rounded border px-3 py-2 font-normal" value={date} onChange={(event) => setDate(event.target.value)} />
+                <label className="min-w-0 max-w-full font-semibold">Data wizyty *
+                    <input type="date" className="mt-1 block max-w-full rounded border px-3 py-2 font-normal" value={date} onChange={(event) => setDate(event.target.value)} />
                 </label>
-                <label className="font-semibold">Godzina wizyty *
-                    <input type="time" step="1" className="mt-1 block rounded border px-3 py-2 font-normal" value={time} onChange={(event) => setTime(event.target.value)} />
+                <label className="min-w-0 max-w-full font-semibold">Godzina wizyty *
+                    <input type="time" step="1" className="mt-1 block max-w-full rounded border px-3 py-2 font-normal" value={time} onChange={(event) => setTime(event.target.value)} />
                 </label>
             </div>
             <h2 className="my-5 text-xl font-semibold">Wybierz formularze</h2>
             {forms.length === 0 && <p>Brak dostępnych formularzy. Najpierw utwórz formularz.</p>}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {forms.map((form) => (
-                    <label key={form.formId} className="rounded border p-4">
+                    <label key={form.formId} className="min-w-0 rounded border p-4 [overflow-wrap:anywhere]">
                         <input type="checkbox" className="mr-3" checked={selected.includes(form.formId)} onChange={(event) => setSelected((previous) =>
                             event.target.checked ? [...previous, form.formId] : previous.filter((id) => id !== form.formId)
                         )} />

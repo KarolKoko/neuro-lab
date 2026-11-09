@@ -18,6 +18,8 @@ test("validates draft and completed forms", () => {
 test("visit creation, search, pagination and isolated form updates", { skip: !process.env.TEST_DATABASE_URL }, async () => {
     const sql = postgres(process.env.TEST_DATABASE_URL!, { max: 1 });
     try {
+        await sql`CREATE TEMP TABLE patient (patient_id integer primary key, is_deleted boolean not null default false)`;
+        await sql`INSERT INTO patient (patient_id) VALUES (1), (2)`;
         await sql`CREATE TEMP TABLE visits (id serial primary key, patient_id integer not null, date date not null, time time not null, forms_data jsonb not null)`;
         const otherForm: PatientFormEntry = { form_id: 2, name: "Badanie", completed: true, layout: [] };
         const [visit] = await createVisit(sql, 1, "2024-02-29", "12:30:00", [draft, otherForm]);
@@ -40,6 +42,13 @@ test("visit creation, search, pagination and isolated form updates", { skip: !pr
             SELECT 1, '2025-01-01', '12:00', '[]'::jsonb FROM generate_series(1, 100)`;
         assert.equal((await getVisits(sql, 1, { terms: [], date: "" }, 1)).visits.length, VISITS_PAGE_SIZE);
         assert.equal((await getVisits(sql, 1, { terms: [], date: "" }, 2)).visits.length, 1);
+        await sql`UPDATE patient SET is_deleted = true WHERE patient_id = 1`;
+        assert.equal((await createVisit(sql, 1, "2024-02-29", "12:30:00", [draft])).length, 0);
+        assert.equal((await getVisit(sql, 1, visit.id)).length, 0);
+        assert.equal((await getVisits(sql, 1, { terms: [], date: "" }, 1)).total, 0);
+        assert.equal((await updateVisitForm(sql, 1, visit.id, finished)).length, 0);
+        await sql`UPDATE patient SET is_deleted = false WHERE patient_id = 1`;
+        assert.deepEqual((await getVisit(sql, 1, visit.id))[0].forms_data, [finished, otherForm]);
     } finally {
         await sql.end();
     }

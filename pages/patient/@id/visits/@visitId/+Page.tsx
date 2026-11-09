@@ -23,7 +23,7 @@ function VisitDetails({ patientId, patientIdentifier, visit }: Data) {
     return (
         <main className="my-6 rounded-xl bg-white p-5 shadow">
             <a className="underline" href={`/patient/${patientId}/visits`}>← Rejestr wizyt</a>
-            <h1 className="mt-4 text-3xl font-semibold">Wizyta: {patientIdentifier}</h1>
+            <h1 className="mt-4 text-3xl font-semibold [overflow-wrap:anywhere]">Wizyta: {patientIdentifier}</h1>
             <p>{visit.date.split("-").reverse().join("-")} {visit.time}</p>
             <h2 className="my-5 text-xl font-semibold">Formularze wizyty</h2>
             <PatientFormCards forms={forms} onEdit={setEditingId} previewUrl={(id) => `${base}/form/${id}`} />

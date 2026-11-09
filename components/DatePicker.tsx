@@ -12,7 +12,7 @@ export default function MyDatePicker(props : { onDateChange: (date: Date) => voi
   }, []);
 
   return (
-    <DatePicker selected={startDate} dateFormat="dd-MM-yyyy" onChange={(date : Date | null) => {
+    <DatePicker id="patient_visit_date" className="w-full min-w-0" selected={startDate} dateFormat="dd-MM-yyyy" onChange={(date : Date | null) => {
         setStartDate(date)
         if (date) props.onDateChange(date)
     }} />

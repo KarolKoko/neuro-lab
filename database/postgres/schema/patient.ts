@@ -11,13 +11,15 @@ await sql`CREATE TABLE IF NOT EXISTS patient (
     patient_unq_id VARCHAR(50) NOT NULL DEFAULT '',
     first_visit_date VARCHAR(10),
     first_visit_time VARCHAR(10),
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT patient_unq_id_unique UNIQUE (patient_unq_id)
 )`;
 
 await sql`ALTER TABLE patient
     ADD COLUMN IF NOT EXISTS patient_unq_id VARCHAR(50) NOT NULL DEFAULT '',
     ADD COLUMN IF NOT EXISTS first_visit_date VARCHAR(10),
-    ADD COLUMN IF NOT EXISTS first_visit_time VARCHAR(10)`;
+    ADD COLUMN IF NOT EXISTS first_visit_time VARCHAR(10),
+    ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE`;
 
 await sql`ALTER TABLE patient DROP CONSTRAINT IF EXISTS patient_unq_id_unique`;
 

@@ -8,10 +8,10 @@ export default function Page() {
 
     return (
         <div
-            className="flex flex-col items-center justify-center gap-4 max-w pt-3 bg-cover bg-center"
-            style={{ backgroundImage: `url(${bg})`, height: "100vh" }}
+            className="flex min-h-screen flex-col items-center justify-center gap-4 bg-cover bg-center p-4"
+            style={{ backgroundImage: `url(${bg})`, minHeight: "100dvh" }}
         >
-            <div className="rounded-lg bg-white/70 p-8 shadow-xl">
+            <div className="w-full max-w-md rounded-lg bg-white/70 p-5 shadow-xl sm:p-8">
                 <h1>Zaloguj się</h1>
                 {alreadyLoggedIn ? (
                     <p>
@@ -22,7 +22,7 @@ export default function Page() {
                         <p className="pb-2">Logowanie odbywa sie za pośrednictwem serwisu OAuth.</p>
                         <a
                             href={loginUrl}
-                            className="px-4 py-2 rounded bg-blue-600 text-white no-underline hover:bg-blue-700"
+                            className="inline-flex min-h-11 items-center rounded bg-blue-600 px-4 py-2 text-white no-underline hover:bg-blue-700"
                         >
                             Kliknij, aby przejść do logowania
                         </a>

@@ -28,6 +28,13 @@ Nieukończony formularz można uzupełnić lub zapisać jako wersję roboczą.
 Zmiany w wybranym formularzu są zapisywane po użyciu przycisku zapisu;
 zamknięcie edytora je odrzuca.
 
+Pacjenta można przenieść do kosza z listy lub strony szczegółów. Nie pojawia się
+wtedy w zwykłych listach ani wynikach wyszukiwania, a jego formularze i wizyty
+pozostają zachowane. Na stronie `/trash` można go przywrócić. Jego unikalny
+identyfikator pozostaje zajęty również podczas pobytu w koszu.
+Przed uruchomieniem tej funkcji wykonaj `npm run postgres:migrate`, aby dodać
+kolumnę `patient.is_deleted`; istniejący pacjenci pozostaną aktywni.
+
 Na stronie pacjenta przycisk „Wizyta” tworzy wizytę z co najmniej jednym
 wybranym formularzem; „Rejestr wizyt” otwiera listę wizyt danego pacjenta
 z wyszukiwaniem po frazach i dacie. Formularze wizyty są niezależnymi kopiami,

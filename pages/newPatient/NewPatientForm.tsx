@@ -34,6 +34,7 @@ const SAVE_STATUS_LABELS: Record<SaveStatus, string> = {
 const FullSizeDialog = styled.div`
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background-color: #fff;
     position: fixed;
     z-index: 40;
@@ -238,7 +239,7 @@ const NewPatientForm = ({
         return (
             <FullSizeDialog>
                 <div className='flex justify-end p-2'>
-                    <button onClick={onClose} style={{cursor: "pointer"}}><img src={closeIcon} alt="Zamknij okno formularza" /></button>
+                    <button onClick={onClose} className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center"><img src={closeIcon} alt="Zamknij okno formularza" /></button>
                 </div>
                 <div className='mx-auto mt-10 max-w-md rounded border p-6 shadow'>
                     <label htmlFor="start-form-select" className="mb-2 block text-sm font-bold text-gray-700">
@@ -273,12 +274,12 @@ const NewPatientForm = ({
     return (
         <>
             <FullSizeDialog>
-                <div className='flex items-center justify-between p-2'>
-                    <span role="status" className="text-sm text-gray-600">
+                <div className='flex items-start justify-between gap-3 p-2'>
+                    <span role="status" className="min-w-0 text-sm text-gray-600 [overflow-wrap:anywhere]">
                         {readOnly ? "Podgląd: " : queue.length > 1 && `Formularz ${queuePosition + 1} z ${queue.length}: `}
                         <b>{entry.name}</b> {!readOnly && SAVE_STATUS_LABELS[saveStatus] && `— ${SAVE_STATUS_LABELS[saveStatus]}`}
                     </span>
-                    <button onClick={closeForm} disabled={advancing}><img src={closeIcon} alt="Zamknij okno formularza" /></button>
+                    <button onClick={closeForm} disabled={advancing} className="flex min-h-11 min-w-11 shrink-0 items-center justify-center"><img src={closeIcon} alt="Zamknij okno formularza" /></button>
                 </div>
                 {saveOnFinishOnly && <p className="px-2 text-sm text-gray-600">Zmiany są zapisywane po kliknięciu przycisku zapisu. Zamknięcie anuluje zmiany.</p>}
                 {
@@ -349,9 +350,9 @@ const NewPatientForm = ({
                     </div>
                 )}
                 {!readOnly && (
-                    <div className='flex justify-end p-4'>
+                    <div className='flex flex-wrap justify-end gap-3 p-4'>
                         {allowDraftSave && (
-                            <button type="button" onClick={saveDraft} disabled={advancing} className="mr-3 rounded border px-5 py-2 text-sm font-semibold disabled:opacity-50">
+                            <button type="button" onClick={saveDraft} disabled={advancing} className="min-h-11 rounded border px-5 py-2 text-sm font-semibold disabled:opacity-50">
                                 Zapisz wersję roboczą
                             </button>
                         )}
@@ -359,7 +360,7 @@ const NewPatientForm = ({
                             type="button"
                             onClick={goNext}
                             disabled={advancing}
-                            className="cursor-pointer rounded bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                            className="min-h-11 cursor-pointer rounded bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
                         > 
                             {isLast ? (saveOnFinishOnly ? "Zapisz" : "Zakończ") : "Dalej"}
                         </button>

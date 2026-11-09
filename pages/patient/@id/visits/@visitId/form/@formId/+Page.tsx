@@ -9,7 +9,7 @@ export default function Page() {
         <main className="my-6">
             <div className="mb-4 rounded-lg bg-white p-4">
                 <a className="font-semibold underline" href={`/patient/${patientId}/visits/${visitId}`}>← Powrót do wizyty</a>
-                <p>Pacjent: {patientIdentifier}</p>
+                <p className="[overflow-wrap:anywhere]">Pacjent: {patientIdentifier}</p>
                 {form.completed !== true && <p className="font-semibold">Formularz nieukończony</p>}
             </div>
             <PrintableForm title={form.name} layout={form.layout} showValues />

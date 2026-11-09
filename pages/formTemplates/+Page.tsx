@@ -153,17 +153,15 @@ const Page = () => {
     };
 
     return (
-        <main className="mx-auto max-w-7xl p-6">
-            <header className="mb-6 flex justify-between items-center">
+        <main className="mx-auto max-w-7xl py-5 sm:p-6">
+            <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold">Szablony formularzy</h1>
                     <p className="mt-2 text-gray-600">
                         Przeglądaj zapisane formularze lub otwórz ich podgląd.
                     </p>                    
                 </div>
-                <a href="/formCreator">
-                    <button className="border py-2 px-4 rounded flex items-center hover:border-blue-700 hover:text-black" style={{gap: "10px", cursor: "pointer"}}>Stwórz nowy <img src={addIcon} alt="" /></button>
-                </a>
+                <a href="/formCreator" className="inline-flex min-h-11 items-center gap-2 rounded border px-4 py-2 hover:border-blue-700 hover:text-black">Stwórz nowy <img src={addIcon} alt="" /></a>
             </header>
             {deleteError && <p role="alert" className="mb-4 text-red-700">{deleteError}</p>}
             {forms.length > 0 ? (

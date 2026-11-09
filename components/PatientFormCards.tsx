@@ -13,7 +13,7 @@ export function PatientFormCards({ forms, onEdit, previewUrl }: {
             {forms.map((form) => {
                 const preview = getFormPreview(form);
                 return (
-                    <article key={form.form_id} className="flex flex-col rounded-lg border border-sky-200 bg-sky-50 p-4">
+                    <article key={form.form_id} className="flex min-w-0 flex-col rounded-lg border border-sky-200 bg-sky-50 p-4 [overflow-wrap:anywhere]">
                         <h3 className="mb-3 break-words text-lg font-semibold">{form.name}</h3>
                         <p className="mb-3 text-sm font-semibold">{form.completed === true ? "Ukończony" : "Nieukończony"}</p>
                         {preview.length ? (

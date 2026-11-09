@@ -22,6 +22,11 @@ const FormLayoutButton = styled.button`
     border-radius: 5px;
     color: inherit;
 
+    @media (max-width: 700px) {
+        flex: 1 1 110px;
+        padding: 16px 12px;
+    }
+
     &:hover {
         background-color: #ffffff;
     }
@@ -60,14 +65,18 @@ const RowInserter = styled.div`
     &:focus-within {
         opacity: 1;
     }
+
+    @media (hover: none) {
+        opacity: 1;
+    }
 `;
 
 const InsertButton = styled.button`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     border: 1px solid #4b647a;
     border-radius: 5px;
     background: #ffffffd9;
@@ -135,6 +144,8 @@ const AddFieldButton = styled.button`
 `;
 
 const FieldBox = styled.button`
+    width: 100%;
+    overflow-wrap: anywhere;
     min-height: 120px;
     padding: 16px;
     text-align: left;
@@ -157,6 +168,7 @@ const ModalBackdrop = styled.div`
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow-y: auto;
     background: #17263599;
 `;
 
@@ -169,17 +181,23 @@ const Modal = styled.form`
     border-radius: 10px;
     background: #ffffff;
     box-shadow: 0 12px 40px #17263555;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
 `;
 
 export const FieldLabel = styled.label`
     display: flex;
     flex-direction: column;
+    min-width: 0;
+    overflow-wrap: anywhere;
     gap: 6px;
     color: #244056;
     font-weight: 600;
 `;
 
 const TextInput = styled.input`
+    min-width: 0;
     padding: 10px;
     border: 1px solid #9aa9b8;
     border-radius: 5px;
@@ -187,6 +205,7 @@ const TextInput = styled.input`
 `;
 
 const SelectInput = styled.select`
+    min-width: 0;
     padding: 10px;
     border: 1px solid #9aa9b8;
     border-radius: 5px;
@@ -195,6 +214,7 @@ const SelectInput = styled.select`
 
 const ModalActions = styled.div`
     display: flex;
+    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 8px;
 `;
@@ -210,7 +230,8 @@ const ActionButton = styled.button<{ $primary?: boolean }>`
 
 const PreviewModalForm = styled.form`
     width: min(100%, 760px);
-    max-height: 90vh;
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -222,6 +243,8 @@ const PreviewModalForm = styled.form`
 `;
 
 export const PreviewInput = styled.input`
+    min-width: 0;
+    max-width: 100%;
     padding: 10px;
     border: 1px solid #9aa9b8;
     border-radius: 5px;

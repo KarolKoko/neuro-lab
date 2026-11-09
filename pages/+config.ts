@@ -7,7 +7,7 @@ import vikeReactStyledComponents from "vike-react-styled-components/config";
 
 const config: Config = {
     // https://vike.dev/head-tags
-    title: "My Vike App",
+    title: "Neuro Lab Office",
     description: "Demo showcasing Vike",
 
     // Make pageContext.user available on the client-side, see https://vike.dev/passToClient

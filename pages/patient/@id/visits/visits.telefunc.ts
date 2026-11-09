@@ -36,6 +36,7 @@ export async function onCreateVisit({ patientId, date, time, formIds }: {
         return { form_id: id, name: form.name, layout: form.layout as FormRow[], completed: false };
     });
     const [visit] = await createVisit(context.db, patientId, date, time, forms);
+    if (!visit) throw new Error("Nie znaleziono aktywnego pacjenta.");
     return { visitId: visit.id, forms };
 }
 
@@ -52,6 +53,7 @@ export async function onSearchVisits({ patientId, terms, date }: { patientId: nu
     const context = contextForPatient(patientId);
     if (!Array.isArray(terms) || !terms.every((term) => typeof term === "string") ||
         typeof date !== "string" || parseVisitDate(date) === null) throw new Error("Nieprawidłowe dane wyszukiwania.");
+    if (!(await getPatient(context.db, patientId)).length) throw new Error("Nie znaleziono aktywnego pacjenta.");
     const phrases = terms.map((term) => term.trim()).filter(Boolean);
     if (!phrases.length && !date) return { results: [], total: 0 };
     const { visits, total } = await getVisits(context.db, patientId, { terms: phrases, date }, 1);

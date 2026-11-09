@@ -17,7 +17,7 @@ export function updatePatientForms(
     return sql`
         UPDATE patient
         SET start_forms = ${sql.json(start_forms as any)}
-        WHERE patient_id = ${patientId}
+        WHERE patient_id = ${patientId} AND NOT is_deleted
         RETURNING patient_id
     `;
 }
@@ -25,7 +25,7 @@ export function updatePatientForms(
 export function getPatient(sql: postgres.Sql, patientId : number) {
     return sql<PatientListItem[]>`
         SELECT patient_id, patient_unq_id, first_visit_date, start_forms
-        FROM patient WHERE patient_id = ${patientId}`;
+        FROM patient WHERE patient_id = ${patientId} AND NOT is_deleted`;
 }
 
 export function updatePatientForm(sql: postgres.Sql, patientId: number, form: PatientFormEntry) {
@@ -40,6 +40,7 @@ export function updatePatientForm(sql: postgres.Sql, patientId: number, form: Pa
             FROM jsonb_array_elements(p.start_forms) WITH ORDINALITY AS forms(entry, position)
         )
         WHERE p.patient_id = ${patientId}
+          AND NOT p.is_deleted
           AND jsonb_typeof(p.start_forms) = 'array'
           AND EXISTS (
               SELECT 1 FROM jsonb_array_elements(
@@ -48,6 +49,21 @@ export function updatePatientForm(sql: postgres.Sql, patientId: number, form: Pa
               WHERE entry->>'form_id' = ${String(form.form_id)}
           )
         RETURNING p.patient_id`;
+}
+
+export function setPatientDeleted(sql: postgres.Sql, patientId: number, isDeleted: boolean) {
+    return sql<{ patient_id: number }[]>`
+        UPDATE patient SET is_deleted = ${isDeleted}
+        WHERE patient_id = ${patientId} AND is_deleted = ${!isDeleted}
+        RETURNING patient_id`;
+}
+
+export async function getDeletedPatients(sql: postgres.Sql) {
+    const patients = await sql<{ patient_id: number; patient_unq_id: string }[]>`
+        SELECT patient_id, patient_unq_id FROM patient
+        WHERE is_deleted
+        ORDER BY patient_unq_id, patient_id`;
+    return Array.from(patients);
 }
 
 export const PATIENTS_PAGE_SIZE = 100;
@@ -84,6 +100,7 @@ export async function getRecentPatients(sql: postgres.Sql) {
         FROM (
             SELECT p.patient_id, p.patient_unq_id, ${lastVisitDate(sql)} AS last_visit_date
             FROM patient p
+            WHERE NOT p.is_deleted
         ) AS recent
         ORDER BY
             CASE WHEN recent.last_visit_date ~ '^[0-9]{2}-[0-9]{2}-[0-9]{4}$'
@@ -99,7 +116,8 @@ export async function getRecentPatients(sql: postgres.Sql) {
 export async function getPatientsList(sql: postgres.Sql, filters: PatientFilters, page: number) {
     const terms = filters.terms.map((term) => term.trim()).filter(Boolean);
     const filter = sql`
-        (${filters.patientId ?? null}::integer IS NULL OR p.patient_id = ${filters.patientId ?? null})
+        NOT p.is_deleted
+        AND (${filters.patientId ?? null}::integer IS NULL OR p.patient_id = ${filters.patientId ?? null})
         AND (${filters.visitDate} = '' OR ${lastVisitDate(sql)} = ${filters.visitDate})
         AND (
             cardinality(${sql.array(terms, 25)}::text[]) = 0

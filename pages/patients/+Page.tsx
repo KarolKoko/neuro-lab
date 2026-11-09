@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useData } from "vike-react/useData";
 import type { Data } from "./+data";
 import { onSearchPatients } from "./patients.telefunc";
+import { TrashPatientButton } from "../../components/TrashPatientButton";
 
 type SearchResults = Awaited<ReturnType<typeof onSearchPatients>>;
 
@@ -60,7 +61,7 @@ export default function Page() {
                 <div className="space-y-2">
                     {terms.map((term, index) => (
                         <div key={index} className="flex gap-2">
-                            <label className="flex-1">
+                            <label className="min-w-0 flex-1">
                                 <span className="sr-only">Fraza {index + 1}</span>
                                 <input
                                     name="q"
@@ -84,15 +85,15 @@ export default function Page() {
                 </div>
                 <div className="mt-3 flex flex-wrap items-end gap-3">
                     <button type="button" className="rounded border px-3 py-2" onClick={() => setTerms((previous) => [...previous, ""])}>Dodaj frazę</button>
-                    <label className="text-sm font-semibold">
+                    <label className="flex min-w-0 max-w-full flex-col gap-1 text-sm font-semibold">
                         Data ostatniej wizyty
-                        <input type="date" name="date" value={date} onFocus={() => setShowResults(true)} onChange={(event) => { setDate(event.target.value); setShowResults(true); }} className="ml-2 rounded border px-3 py-2 font-normal" />
+                        <input type="date" name="date" value={date} onFocus={() => setShowResults(true)} onChange={(event) => { setDate(event.target.value); setShowResults(true); }} className="max-w-full rounded border px-3 py-2 font-normal" />
                     </label>
                     <button type="submit" className="rounded bg-sky-800 px-4 py-2 font-semibold text-white">Szukaj</button>
                     <a href="/patients" className="rounded border px-4 py-2">Wyczyść</a>
                 </div>
                 {showResults && (loading || searchError || results) && (
-                    <div className="absolute z-10 mt-2 max-h-80 w-full overflow-auto rounded border bg-white p-3 shadow-lg" aria-live="polite">
+                    <div className="absolute z-10 mt-2 max-h-80 w-full overflow-auto break-words rounded border bg-white p-3 shadow-lg [overflow-wrap:anywhere]" aria-live="polite">
                         <button type="button" className="float-right underline" onClick={() => setShowResults(false)}>Zamknij</button>
                         {loading && <p>Wyszukiwanie...</p>}
                         {searchError && <p role="alert" className="text-red-700">{searchError}</p>}
@@ -124,6 +125,7 @@ export default function Page() {
                         <th scope="col" className="p-3">Unikalny identyfikator pacjenta</th>
                         <th scope="col" className="p-3">Data ostatniej wizyty</th>
                         <th scope="col" className="p-3">Uzupełnione formularze</th>
+                        {/* <th scope="col" className="p-3">Akcje</th> */}
                     </tr></thead>
                     <tbody>
                         {data.patients.map((patient) => (
@@ -134,13 +136,14 @@ export default function Page() {
                                     ...(Array.isArray(patient.start_forms) ? patient.start_forms : []),
                                     ...(patient.visit_forms ?? []),
                                 ].filter((form) => form.completed === true).map((form) => form.name))).join(", ") || "—"}</td>
+                                {/* <td className="p-3"><TrashPatientButton patientId={patient.patient_id} identifier={patient.patient_unq_id} onTrashed={() => window.location.reload()} /></td> */}
                             </tr>
                         ))}
-                        {data.patients.length === 0 && <tr><td colSpan={3} className="p-3">Brak pacjentów na tej stronie.</td></tr>}
+                        {data.patients.length === 0 && <tr><td colSpan={4} className="p-3">Brak pacjentów na tej stronie.</td></tr>}
                     </tbody>
                 </table>
             </div>
-            <nav aria-label="Paginacja pacjentów" className="mt-4 flex items-center gap-4">
+            <nav aria-label="Paginacja pacjentów" className="mt-4 flex flex-wrap items-center gap-4">
                 {data.page > 1 && <a className="underline" href={pageUrl(data.page - 1)}>Poprzednia</a>}
                 <span>Strona {data.page} z {Math.max(pageCount, 1)}</span>
                 {data.page < pageCount && <a className="underline" href={pageUrl(data.page + 1)}>Następna</a>}

@@ -16,7 +16,7 @@ export default function Page() {
         <main className="my-6 space-y-6">
             <header className="rounded-xl bg-white p-6 shadow">
                 <p className="mb-1 text-sm font-semibold uppercase tracking-wide text-sky-700">NeuroLab</p>
-                <h1 className="mb-2 text-3xl font-semibold">Witaj{user?.name ? `, ${user.name}` : ""}!</h1>
+                <h1 className="mb-2 text-3xl font-semibold [overflow-wrap:anywhere]">Witaj{user?.name ? `, ${user.name}` : ""}!</h1>
                 <p className="text-gray-600">Zarządzaj formularzami i wizytami pacjentów w jednym miejscu.</p>
             </header>
             <section aria-labelledby="quick-actions" className="rounded-xl bg-white p-6 shadow">
@@ -43,7 +43,7 @@ export default function Page() {
                         {recentPatients.map((patient) => (
                             <li key={patient.patient_id}>
                                 <a href={`/patient/${patient.patient_id}`} className="flex flex-wrap items-center justify-between gap-2 rounded px-2 py-3 hover:bg-sky-50">
-                                    <span className="font-semibold text-sky-900">{patient.patient_unq_id}</span>
+                                    <span className="min-w-0 font-semibold text-sky-900 [overflow-wrap:anywhere]">{patient.patient_unq_id}</span>
                                     <span className="text-sm text-gray-600">Ostatnia wizyta: {patient.last_visit_date || "brak daty"}</span>
                                 </a>
                             </li>

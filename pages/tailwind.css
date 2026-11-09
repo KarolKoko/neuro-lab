@@ -66,6 +66,23 @@
   font-size: 11pt;
 }
 
+@media screen and (max-width: 700px) {
+  .form-document-preview {
+    min-height: 0;
+    padding: 20px 16px;
+    overflow-wrap: anywhere;
+  }
+
+  .form-document-preview .print-title {
+    margin-bottom: 24px;
+  }
+
+  .form-document-preview .print-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 3mm;
+  }
+}
+
   .form-document .print-title {
     margin: 0 0 18mm;
     color: #111;

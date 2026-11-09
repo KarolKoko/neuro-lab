@@ -1,5 +1,5 @@
 import type { Config } from "vike/types";
 
 export default {
-    title: "Sign in",
+    title: "Neuro Lab Office",
 } satisfies Config;
