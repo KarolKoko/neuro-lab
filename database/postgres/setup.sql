@@ -1,0 +1,39 @@
+\set ON_ERROR_STOP on
+
+SELECT 'CREATE DATABASE office'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'office')
+\gexec
+
+\connect office
+
+CREATE TABLE IF NOT EXISTS forms (
+    form_id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    layout JSONB NOT NULL
+);
+
+ALTER TABLE forms
+    ADD COLUMN IF NOT EXISTS form_id SERIAL PRIMARY KEY,
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+CREATE OR REPLACE FUNCTION set_forms_timestamps()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        NEW.created_at := COALESCE(NEW.created_at, CURRENT_TIMESTAMP);
+        NEW.updated_at := COALESCE(NEW.updated_at, CURRENT_TIMESTAMP);
+    ELSE
+        NEW.updated_at := CURRENT_TIMESTAMP;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS forms_set_timestamps ON forms;
+
+CREATE TRIGGER forms_set_timestamps
+BEFORE INSERT OR UPDATE ON forms
+FOR EACH ROW
+EXECUTE FUNCTION set_forms_timestamps();

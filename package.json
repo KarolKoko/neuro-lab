@@ -13,10 +13,13 @@
     "hono": "^4.13.1",
     "postgres": "^3.4.9",
     "react": "^19.2.8",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^19.2.8",
+    "styled-components": "^6.5.3",
     "telefunc": "^0.2.23",
     "vike": "^0.4.260",
-    "vike-react": "^0.6.25"
+    "vike-react": "^0.6.25",
+    "vike-react-styled-components": "^1.0.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

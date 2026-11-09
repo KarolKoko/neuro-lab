@@ -1,19 +1,20 @@
 import { dbMiddleware } from "./db-middleware";
+import { sessionMiddleware } from "./session-middleware";
 import { telefuncHandler } from "./telefunc-handler";
 import vike from "@vikejs/hono";
-import { Hono } from "hono";
+import HonoInstance from "./hono-instance";
 
 function getApp() {
-  const app = new Hono();
+    vike(HonoInstance, [
+        // Make the logged-in user available as `context.user` (merged into pageContext.user)
+        sessionMiddleware,
+        // Make database available in Context as `context.db`
+        dbMiddleware,
+        // Telefunc route. See https://telefunc.com
+        telefuncHandler,
+    ]);
 
-  vike(app, [
-    // Make database available in Context as `context.db`
-    dbMiddleware,
-    // Telefunc route. See https://telefunc.com
-    telefuncHandler,
-  ]);
-
-  return app;
+    return HonoInstance;
 }
 
 export const app = getApp();

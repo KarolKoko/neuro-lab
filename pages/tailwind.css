@@ -17,3 +17,115 @@
     @apply text-blue-600 hover:text-pink-400 visited:text-blue-900;
   }
 }
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+.printable-form {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm 20mm;
+  }
+
+  body.printing-form * {
+    visibility: hidden !important;
+  }
+
+  body.printing-form .printable-form,
+  body.printing-form .printable-form * {
+    visibility: visible !important;
+  }
+
+  body.printing-form .printable-form {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background: #fff;
+    font-family: Arial, sans-serif;
+    font-size: 11pt;
+  }
+
+  .print-title {
+    margin: 0 0 18mm;
+    color: #111;
+    font-size: 15pt;
+    font-weight: 500;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .print-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 5mm;
+  }
+
+  .print-row {
+    display: grid;
+    gap: 5mm;
+    break-inside: avoid;
+  }
+
+  .print-cell {
+    min-width: 0;
+  }
+
+  .print-field {
+    display: flex;
+    align-items: baseline;
+    gap: 2mm;
+    min-height: 7mm;
+    line-height: 1.5;
+  }
+
+  .print-long-field {
+    display: block;
+  }
+
+  .print-writing-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 2mm;
+    margin-top: 3mm;
+  }
+
+  .print-answer-line {
+    flex: 1;
+    min-width: 8mm;
+    min-height: 5mm;
+    border-bottom: 1px dotted #999;
+  }
+
+  .print-empty-line {
+    display: block;
+    min-height: 7mm;
+  }
+
+  .print-section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 2mm;
+    margin: 4mm 0 1mm;
+    color: #222;
+    font-size: 11pt;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .print-checkbox {
+    display: inline-block;
+    flex: 0 0 4mm;
+    width: 4mm;
+    height: 4mm;
+    border: 1px solid #777;
+    vertical-align: baseline;
+  }
+}

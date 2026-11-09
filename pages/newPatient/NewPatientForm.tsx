@@ -1,0 +1,312 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import type { PatientFormEntry } from '../../types/form'
+import { FieldLabel, FormRowView, PreviewInput, SectionTitle } from '../formCreator/+Page';
+import {styled} from 'styled-components';
+import closeIcon from '../../assets/x.svg'
+import ErrorDialog from '../../components/ErrorDialog';
+import { onUpdatePatient } from './newPatient.telefunc';
+
+const AUTOSAVE_DELAY_MS = 800;
+
+type NewPatientFormProps = {
+    patientId: number;
+    forms: PatientFormEntry[];
+    readOnly?: boolean;
+    onFormsChange?: (forms: PatientFormEntry[]) => void;
+    onFormCompleted: (formId: number) => void;
+    onClose: () => void;
+};
+
+type SaveStatus = "idle" | "pending" | "saving" | "saved" | "error";
+
+const SAVE_STATUS_LABELS: Record<SaveStatus, string> = {
+    idle: "",
+    pending: "Zmiany niezapisane...",
+    saving: "Zapisywanie...",
+    saved: "Zapisano",
+    error: "Błąd zapisu",
+};
+
+const FullSizeDialog = styled.div`
+    width: 100%;
+    height: 100vh;
+    background-color: #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    padding: 100px;
+`
+
+const NewPatientForm = ({
+    patientId,
+    forms,
+    readOnly = false,
+    onFormsChange,
+    onFormCompleted,
+    onClose,
+}: NewPatientFormProps) => {
+    const [entries, setEntries] = useState<PatientFormEntry[]>(forms);
+    // Order in which forms are shown: the chosen one first, then the rest
+    const [queue, setQueue] = useState<number[] | null>(
+        forms.length === 1 ? [0] : null,
+    );
+    const [queuePosition, setQueuePosition] = useState(0);
+    const [startIndex, setStartIndex] = useState(0);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [missingRequiredFields, setMissingRequiredFields] = useState<string[]>([]);
+
+    const latestEntries = useRef(entries);
+    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const hasPendingChanges = useRef(false);
+    // Saves are chained so an older request can never overwrite a newer one
+    const saveQueue = useRef<Promise<void>>(Promise.resolve());
+
+    useEffect(() => {
+        if (!readOnly) onFormsChange?.(entries);
+    }, [entries, onFormsChange, readOnly]);
+
+    const save = useCallback(() => {
+        if (timer.current) {
+            clearTimeout(timer.current);
+            timer.current = null;
+        }
+        if (!hasPendingChanges.current) return saveQueue.current;
+
+        hasPendingChanges.current = false;
+        const snapshot = latestEntries.current;
+        setSaveStatus("saving");
+        saveQueue.current = saveQueue.current.then(async () => {
+            try {
+                await onUpdatePatient({ patientId, formFilled: snapshot });
+                setSaveStatus(hasPendingChanges.current ? "pending" : "saved");
+            } catch (err) {
+                console.error("Nie udało się zapisać formularza pacjenta:", err);
+                hasPendingChanges.current = true;
+                setSaveStatus("error");
+                setErrorMessage(
+                    err instanceof Error && err.message
+                        ? err.message
+                        : "Nie udało się zapisać zmian. Spróbuj ponownie.",
+                );
+            }
+        });
+        return saveQueue.current;
+    }, [patientId]);
+
+    const updateValue = (
+        entryIndex: number,
+        rowIndex: number,
+        columnIndex: number,
+        value: string,
+    ) => {
+        setMissingRequiredFields([]);
+        setEntries((previousEntries) => {
+            const nextEntries = previousEntries.map((entry, currentEntry) =>
+                currentEntry !== entryIndex
+                    ? entry
+                    : {
+                          ...entry,
+                          layout: entry.layout.map((row, currentRow) =>
+                              currentRow !== rowIndex
+                                  ? row
+                                  : {
+                                        columns: row.columns.map((column, currentColumn) =>
+                                            currentColumn !== columnIndex || !column.field
+                                                ? column
+                                                : { field: { ...column.field, value } },
+                                        ),
+                                    },
+                          ),
+                      },
+            );
+            latestEntries.current = nextEntries;
+            return nextEntries;
+        });
+
+        hasPendingChanges.current = true;
+        setSaveStatus("pending");
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(save, AUTOSAVE_DELAY_MS);
+    };
+
+    // Flush unsaved changes when the component unmounts
+    useEffect(() => () => {
+        void save();
+    }, [save]);
+
+    const startFilling = () => {
+        setQueue([
+            startIndex,
+            ...entries.map((_, index) => index).filter((index) => index !== startIndex),
+        ]);
+        setQueuePosition(0);
+    };
+
+    const closeForm = async () => {
+        await save();
+        if (!hasPendingChanges.current) onClose();
+    };
+
+    const goNext = async () => {
+        if (!queue) return;
+
+        const entryIndex = queue[queuePosition];
+        const currentEntry = entries[entryIndex];
+        const missingFields = currentEntry.layout.flatMap((row) =>
+            row.columns.flatMap(({ field }) => {
+                if (!field?.required || field.type === "label") return [];
+                const value = field.value?.trim() ?? "";
+                const isMissing =
+                    field.type === "checkbox" ? value !== "true" : value.length === 0;
+                return isMissing ? [field.label] : [];
+            }),
+        );
+
+        if (missingFields.length > 0) {
+            setMissingRequiredFields(missingFields);
+            return;
+        }
+
+        setMissingRequiredFields([]);
+        await save();
+        if (hasPendingChanges.current) return;
+
+        onFormCompleted(currentEntry.form_id);
+        if (queuePosition + 1 < queue.length) {
+            setQueuePosition(queuePosition + 1);
+        } else {
+            onClose();
+        }
+    };
+
+    if (queue === null) {
+        return (
+            <FullSizeDialog>
+                <div className='flex justify-end p-2'>
+                    <button onClick={onClose} style={{cursor: "pointer"}}><img src={closeIcon} alt="Zamknij okno formularza" /></button>
+                </div>
+                <div className='mx-auto mt-10 max-w-md rounded border p-6 shadow'>
+                    <label htmlFor="start-form-select" className="mb-2 block text-sm font-bold text-gray-700">
+                        Który formularz chcesz wypełnić jako pierwszy?
+                    </label>
+                    <select
+                        id="start-form-select"
+                        className="mb-4 w-full rounded border px-3 py-2"
+                        value={startIndex}
+                        onChange={(event) => setStartIndex(Number(event.target.value))}
+                    >
+                        {entries.map((entry, index) => (
+                            <option key={entry.form_id} value={index}>{entry.name}</option>
+                        ))}
+                    </select>
+                    <button
+                        type="button"
+                        onClick={startFilling}
+                        className="cursor-pointer rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                    >
+                        Rozpocznij
+                    </button>
+                </div>
+            </FullSizeDialog>
+        );
+    }
+
+    const entryIndex = queue[queuePosition];
+    const entry = entries[entryIndex];
+    const isLast = queuePosition + 1 >= queue.length;
+
+    return (
+        <>
+            <FullSizeDialog>
+                <div className='flex items-center justify-between p-2'>
+                    <span role="status" className="text-sm text-gray-600">
+                        {readOnly ? "Podgląd: " : queue.length > 1 && `Formularz ${queuePosition + 1} z ${queue.length}: `}
+                        <b>{entry.name}</b> {!readOnly && SAVE_STATUS_LABELS[saveStatus] && `— ${SAVE_STATUS_LABELS[saveStatus]}`}
+                    </span>
+                    <button onClick={closeForm}><img src={closeIcon} alt="Zamknij okno formularza" /></button>
+                </div>
+                {
+                    entry.layout.map((row, rowIndex) => (
+                        <FormRowView key={rowIndex} $columnCount={row.columns.length}>
+                            {row.columns.map(({ field }, columnIndex) => {
+                                if (!field) return <div key={columnIndex} />;
+                                if (field.type === "label") {
+                                    return <SectionTitle key={columnIndex}>{field.label}</SectionTitle>;
+                                }
+                                const inputType =
+                                    field.type === "attachment"
+                                        ? "file"
+                                        : field.type === "number"
+                                            ? "number"
+                                            : field.type == "text" ? "text" :
+                                                "checkbox";
+
+                                return (
+                                    <FieldLabel key={columnIndex}>
+                                        {field.label}{field.required ? " *" : ""}
+                                        {readOnly ? (
+                                            <PreviewInput
+                                                type={inputType === "checkbox" ? "checkbox" : "text"}
+                                                {...(inputType === "checkbox"
+                                                    ? { checked: field.value === "true", disabled: true }
+                                                    : { value: field.value ?? "", readOnly: true })}
+                                            />
+                                        ) : (
+                                            <PreviewInput
+                                                type={inputType}
+                                                required={field.required}
+                                                {...(inputType === "checkbox"
+                                                    ? { checked: field.value === "true" }
+                                                    : inputType === "file"
+                                                        ? {}
+                                                        : { value: field.value ?? "" })}
+                                                onChange={(event) =>
+                                                    updateValue(
+                                                        entryIndex,
+                                                        rowIndex,
+                                                        columnIndex,
+                                                        inputType === "file"
+                                                            ? event.target.files?.[0]?.name ?? ""
+                                                            : inputType === "checkbox"
+                                                                ? String(event.target.checked)
+                                                                : event.target.value,
+                                                    )
+                                                }
+                                            />
+                                        )}
+                                    </FieldLabel>
+                                );
+                            })}
+                        </FormRowView>
+                    ))
+                }
+                {!readOnly && missingRequiredFields.length > 0 && (
+                    <div role="alert" className="mx-4 mb-2 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-800">
+                        <p className="m-0 font-semibold">Uzupełnij wymagane pola przed przejściem dalej:</p>
+                        <ul className="mb-0 mt-1 list-inside list-disc">
+                            {missingRequiredFields.map((label, index) => (
+                                <li key={`${label}-${index}`}>{label}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {!readOnly && (
+                    <div className='flex justify-end p-4'>
+                        <button
+                            type="button"
+                            onClick={goNext}
+                            className="cursor-pointer rounded bg-blue-600 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+                        >
+                            {isLast ? "Zakończ" : "Dalej"}
+                        </button>
+                    </div>
+                )}
+            </FullSizeDialog>
+            {errorMessage && <ErrorDialog message={errorMessage} onClose={() => setErrorMessage(null)} />}
+        </>
+    )
+}
+
+export default NewPatientForm
