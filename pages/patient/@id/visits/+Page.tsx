@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useData } from "vike-react/useData";
 import { onSearchVisits } from "./visits.telefunc";
 import type { Data } from "./+data";
+import { FirstVisitRow } from "./FirstVisitRow";
 
 type SearchResults = Awaited<ReturnType<typeof onSearchVisits>>;
 
@@ -91,11 +92,13 @@ export default function Page() {
                     </div>
                 )}
             </form>
-            <p className="text-sm text-gray-600">Liczba wizyt: {data.total}</p>
+            <p className="text-sm text-gray-600">Liczba wizyt w rejestrze: {data.total}. Pierwsza wizyta jest wyświetlana osobno, niezależnie od filtrów.</p>
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">
                     <thead><tr className="border-b"><th className="p-3">Data</th><th className="p-3">Godzina</th><th className="p-3">Formularze</th><th className="p-3">Szczegóły</th></tr></thead>
-                    <tbody>{data.visits.map((visit) => (
+                    <tbody>
+                    <FirstVisitRow patientId={data.patientId} {...data.firstVisit} />
+                    {data.visits.map((visit) => (
                         <tr key={visit.id} className="border-b">
                             <td className="p-3">{visit.date.split("-").reverse().join("-")}</td>
                             <td className="p-3">{visit.time}</td>
@@ -103,7 +106,7 @@ export default function Page() {
                             <td className="p-3"><a className="underline" href={`${base}/${visit.id}`}>Szczegóły<span className="sr-only"> wizyty {visit.date} {visit.time}</span></a></td>
                         </tr>
                     ))}
-                    {data.visits.length === 0 && <tr><td colSpan={4} className="p-3">Brak wizyt na tej stronie.</td></tr>}</tbody>
+                    {data.visits.length === 0 && <tr><td colSpan={4} className="p-3">Brak wizyt w rejestrze na tej stronie.</td></tr>}</tbody>
                 </table>
             </div>
             <nav aria-label="Paginacja wizyt" className="mt-4 flex flex-wrap gap-4">

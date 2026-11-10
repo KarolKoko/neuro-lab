@@ -10,17 +10,25 @@ export async function data(pageContext: PageContextServer) {
         throw new Error("Missing required environment variable: BASE_URL");
     }
 
-    const formIdParam = new URL(
+    const params = new URL(
         pageContext.urlOriginal,
         baseUrl,
-    ).searchParams.get("formId");
+    ).searchParams;
+    const formIdParam = params.get("formId");
+    const cloneFromParam = params.get("cloneFrom");
 
-    if (formIdParam === null) {
-        return { form: null };
+    if (formIdParam !== null && cloneFromParam !== null) {
+        throw render(404);
     }
 
-    const formId = Number(formIdParam);
-    if (!Number.isSafeInteger(formId) || formId < 1) {
+    const sourceId = formIdParam ?? cloneFromParam;
+    if (sourceId === null) {
+        return { form: null, mode: "create" as const };
+    }
+
+    const formId = Number(sourceId);
+    if ((cloneFromParam !== null && !/^[1-9]\d*$/.test(sourceId)) ||
+        !Number.isSafeInteger(formId) || formId < 1 || formId > 2147483647) {
         throw render(404);
     }
 
@@ -29,5 +37,5 @@ export async function data(pageContext: PageContextServer) {
         throw render(404);
     }
 
-    return { form };
+    return { form, mode: cloneFromParam === null ? "edit" as const : "clone" as const };
 }

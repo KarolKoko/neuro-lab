@@ -4,6 +4,12 @@ Generated with [vike.dev/new](https://vike.dev/new) ([version 681](https://www.n
 npm create vike@latest --- --react --tailwindcss --telefunc --hono --postgres
 ```
 
+## Formularze
+
+Na liście szablonów przycisk „Klonuj” otwiera kreator z kopią układu
+wybranego formularza. Wpisz nazwę nowego szablonu i zapisz go; oryginał
+pozostaje bez zmian. Układ kopii można również edytować przed zapisaniem.
+
 ## Pacjenci
 
 Strona główna zawiera szybkie akcje oraz pięciu pacjentów z najnowszą datą
@@ -24,6 +30,8 @@ Kliknięcie identyfikatora na liście lub w wynikach wyszukiwania otwiera
 `/patient/:id`, gdzie widoczne są wszystkie przypisane formularze, ich status
 i do pięciu pierwszych zapisanych wartości każdego z nich. Przycisk „Podgląd”
 otwiera stronę z pełnym układem formularza i zapisanymi odpowiedziami.
+Na stronie podglądu formularza pacjenta przycisk „Drukuj formularz” drukuje
+sam formularz wraz z zapisanymi odpowiedziami.
 Nieukończony formularz można uzupełnić lub zapisać jako wersję roboczą.
 Zmiany w wybranym formularzu są zapisywane po użyciu przycisku zapisu;
 zamknięcie edytora je odrzuca.
@@ -40,8 +48,11 @@ wybranym formularzem; „Rejestr wizyt” otwiera listę wizyt danego pacjenta
 z wyszukiwaniem po frazach i dacie. Formularze wizyty są niezależnymi kopiami,
 które można później uzupełnić, edytować i obejrzeć.
 Przed pierwszym uruchomieniem tej funkcji wykonaj `npm run postgres:migrate`,
-aby utworzyć tabelę `visits`. Istniejąca pierwsza wizyta pozostaje w danych
-pacjenta i nie jest automatycznie dodawana do rejestru wizyt.
+aby utworzyć tabelę `visits`. Pierwsza wizyta, przechowywana w danych pacjenta,
+jest wyświetlana jako dodatkowy pierwszy wiersz na każdej stronie rejestru;
+prowadzi do szczegółów pacjenta. Pozostaje widoczna niezależnie od filtrów i nie
+jest wliczana do liczby ani paginacji wizyt w rejestrze. Wyszukiwarka obejmuje
+wizyty zapisane w tabeli `visits`.
 
 Testy wyszukiwania można uruchomić przez `node --import tsx --test pages/patients/patients.test.ts`.
 Test PostgreSQL wymaga ustawienia `TEST_DATABASE_URL` i korzysta wyłącznie

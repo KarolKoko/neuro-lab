@@ -23,8 +23,8 @@ export function updatePatientForms(
 }
 
 export function getPatient(sql: postgres.Sql, patientId : number) {
-    return sql<PatientListItem[]>`
-        SELECT patient_id, patient_unq_id, first_visit_date, start_forms
+    return sql<PatientDetail[]>`
+        SELECT patient_id, patient_unq_id, first_visit_date, first_visit_time, start_forms
         FROM patient WHERE patient_id = ${patientId} AND NOT is_deleted`;
 }
 
@@ -75,6 +75,10 @@ export type PatientListItem = {
     last_visit_date?: string | null;
     start_forms: PatientFormEntry[];
     visit_forms?: PatientFormEntry[];
+};
+
+export type PatientDetail = PatientListItem & {
+    first_visit_time: string | null;
 };
 
 export type PatientFilters = {

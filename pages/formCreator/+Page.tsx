@@ -360,9 +360,13 @@ export const PreviewModal = (props: PreviewModalProps) => {
 }
 
 const Page = () => {
-    const { form } = useData<Data>();
+    const data = useData<Data>();
+    return <FormCreator key={`${data.mode}-${data.form?.form_id ?? ""}`} data={data} />;
+};
+
+const FormCreator = ({ data: { form, mode } }: { data: Data }) => {
     const [layout, setLayout] = useState<FormRow[]>(form?.layout ?? []);
-    const [formName, setFormName] = useState(form?.name ?? "");
+    const [formName, setFormName] = useState(mode === "edit" ? form?.name ?? "" : "");
     const [activePosition, setActivePosition] = useState<FieldPosition | null>(null);
     const [titleTarget, setTitleTarget] = useState<TitleTarget | null>(null);
     const [titleDraft, setTitleDraft] = useState("");
@@ -460,7 +464,7 @@ const Page = () => {
         setSaveError("");
         setSaveSuccess("");
         try {
-            if (form) {
+            if (mode === "edit" && form) {
                 await onUpdateForm({ formId: form.form_id, name, layout });
                 setSaveSuccess("Formularz został zaktualizowany.");
             } else {
@@ -484,7 +488,8 @@ const Page = () => {
             <h2 style={{
                 fontSize: "30px",
                 marginTop: "20px"
-            }}>{form ? "Edytuj formularz" : "Stwórz formularz"}</h2>
+            }}>{mode === "clone" ? "Klonuj formularz" : mode === "edit" ? "Edytuj formularz" : "Stwórz formularz"}</h2>
+            {mode === "clone" && <p>Na podstawie formularza „{form?.name}”. Wpisz nazwę nowego formularza.</p>}
             <p>
                 Użyj siatki i bloków aby utworzyć układ. Następnie wybierz pola,
                 które chcesz dodać do formularza.
@@ -515,7 +520,7 @@ const Page = () => {
                     Tytuł sekcji
                 </ActionButton>                
                 <ActionButton type="button" onClick={saveForm} disabled={isSaving}>
-                    {isSaving ? "Zapisywanie..." : form ? "Zapisz zmiany" : "Zapisz"}
+                    {isSaving ? "Zapisywanie..." : mode === "edit" ? "Zapisz zmiany" : "Zapisz"}
                 </ActionButton>
                 <ActionButton
                     $primary

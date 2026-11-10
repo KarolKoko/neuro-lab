@@ -4,6 +4,7 @@ import type { Data } from "./+data";
 import printerIcon from "../../assets/printer.svg";
 import editIcon from "../../assets/edit.svg";
 import previewIcon from "../../assets/eye.svg";
+import cloneIcon from "../../assets/clone.svg";
 import { PreviewModal } from "../formCreator/+Page";
 import { onDeleteForm } from "../formCreator/formCreator.telefunc";
 import addIcon from '../../assets/plus.svg'
@@ -77,6 +78,14 @@ const FormBox = ({
                     >
                         <img className="h-4 w-4" src={editIcon} alt="" />
                         Edytuj
+                    </a>
+                    <a
+                        href={`/formCreator?cloneFrom=${formId}`}
+                        aria-label={`Klonuj formularz ${title}`}
+                        className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold hover:border-blue-700 hover:text-black"
+                    >
+                        <img className="h-4 w-4" src={cloneIcon} alt="" />
+                        Klonuj
                     </a>
                     <button
                         type="button"

@@ -4,7 +4,7 @@ import { getPatient } from "../../../database/postgres/queries/patient";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
-export async function data(pageContext: PageContextServer) {
+export async function data(pageContext: Pick<PageContextServer, "routeParams" | "db">) {
     const rawId = pageContext.routeParams.id;
     if (!/^[1-9]\d*$/.test(rawId)) throw render(404);
     const id = Number(rawId);

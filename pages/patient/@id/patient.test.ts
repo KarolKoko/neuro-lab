@@ -55,6 +55,7 @@ test("updates one form without overwriting other forms", { skip: !process.env.TE
             patient_id serial primary key,
             patient_unq_id text not null,
             first_visit_date text,
+            first_visit_time text,
             start_forms jsonb not null,
             is_deleted boolean not null default false
         )`;
@@ -92,7 +93,7 @@ test("trash hides patients and preserves forms and visits when restored", { skip
     try {
         await sql`CREATE TEMP TABLE patient (
             patient_id serial primary key, patient_unq_id text not null unique,
-            first_visit_date text, start_forms jsonb not null, is_deleted boolean not null default false
+            first_visit_date text, first_visit_time text, start_forms jsonb not null, is_deleted boolean not null default false
         )`;
         await sql`CREATE TEMP TABLE visits (id serial primary key, patient_id integer not null, date date not null, time time not null, forms_data jsonb not null)`;
         const form: PatientFormEntry = { form_id: 1, name: "Test", completed: true, layout: [] };
